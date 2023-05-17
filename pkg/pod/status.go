@@ -147,6 +147,8 @@ func setTaskRunStatusBasedOnStepStatus(logger *zap.SugaredLogger, stepStatuses [
 	trs := &tr.Status
 	var merr *multierror.Error
 
+	var testErr error
+	// Continue with extraction of termination messages
 	for _, s := range stepStatuses {
 		if s.State.Terminated != nil && len(s.State.Terminated.Message) != 0 {
 			msg := s.State.Terminated.Message
@@ -183,6 +185,7 @@ func setTaskRunStatusBasedOnStepStatus(logger *zap.SugaredLogger, stepStatuses [
 				}
 				if exitCode != nil {
 					s.State.Terminated.ExitCode = *exitCode
+					testErr = fmt.Errorf("Test update pod terminated exitcode")
 				}
 			}
 		}
@@ -192,6 +195,10 @@ func setTaskRunStatusBasedOnStepStatus(logger *zap.SugaredLogger, stepStatuses [
 			ContainerName:  s.Name,
 			ImageID:        s.ImageID,
 		})
+	}
+	if testErr != nil {
+		merr = multierror.Append(merr, testErr)
+		logger.Infow("TEST: Test update pod terminated exitcode")
 	}
 
 	return merr

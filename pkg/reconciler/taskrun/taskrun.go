@@ -534,6 +534,8 @@ func (c *Reconciler) reconcile(ctx context.Context, tr *v1beta1.TaskRun, rtr *re
 		}
 	}
 
+	logger.Infow("TEST: MakeTaskRunStatus", "pod", pod.Status.ContainerStatuses)
+
 	// Convert the Pod's status to the equivalent TaskRun Status.
 	tr.Status, err = podconvert.MakeTaskRunStatus(logger, *tr, pod)
 	if err != nil {
