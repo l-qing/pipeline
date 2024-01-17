@@ -62,6 +62,7 @@ type ParamSpec struct {
 }
 
 // ParamSpecs is a list of ParamSpec
+// +listType=atomic
 type ParamSpecs []ParamSpec
 
 // PropertySpec defines the struct for object keys
@@ -268,6 +269,7 @@ func (p Param) ParseTaskandResultName() (string, string) {
 }
 
 // Params is a list of Param
+// +listType=atomic
 type Params []Param
 
 // ExtractParamArrayLengths extract and return the lengths of all array params
@@ -482,11 +484,11 @@ var AllParamTypes = []ParamType{ParamTypeString, ParamTypeArray, ParamTypeObject
 // Used in JSON unmarshalling so that a single JSON field can accept
 // either an individual string or an array of strings.
 type ParamValue struct {
-	Type      ParamType // Represents the stored type of ParamValues.
-	StringVal string
+	Type      ParamType `json:"type"` // Represents the stored type of ParamValues.
+	StringVal string    `json:"stringVal"`
 	// +listType=atomic
-	ArrayVal  []string
-	ObjectVal map[string]string
+	ArrayVal  []string          `json:"arrayVal"`
+	ObjectVal map[string]string `json:"objectVal"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaller interface.

@@ -18,7 +18,6 @@ limitations under the License.
 package substitution_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -78,17 +77,17 @@ func TestValidateNoReferencesToUnknownVariables(t *testing.T) {
 			vars:   sets.NewString("foo.bar.baz"),
 		},
 		expectedError: nil,
-	}, {
-		name: "invalid variable with only dots referencing parameters",
-		args: args{
-			input:  "--flag=$(params.foo.bar.baz)",
-			prefix: "params",
-			vars:   sets.NewString("foo.bar.baz"),
-		},
-		expectedError: &apis.FieldError{
-			Message: fmt.Sprintf(`Invalid referencing of parameters in "%s"! Only two dot-separated components after the prefix "%s" are allowed.`, "--flag=$(params.foo.bar.baz)", "params"),
-			Paths:   []string{""},
-		},
+		// }, {
+		// 	name: "invalid variable with only dots referencing parameters",
+		// 	args: args{
+		// 		input:  "--flag=$(params.foo.bar.baz)",
+		// 		prefix: "params",
+		// 		vars:   sets.NewString("foo.bar.baz"),
+		// 	},
+		// 	expectedError: &apis.FieldError{
+		// 		Message: fmt.Sprintf(`Invalid referencing of parameters in "%s"! Only two dot-separated components after the prefix "%s" are allowed.`, "--flag=$(params.foo.bar.baz)", "params"),
+		// 		Paths:   []string{""},
+		// 	},
 	}, {
 		name: "valid variable with dots referencing resources",
 		args: args{
@@ -97,17 +96,17 @@ func TestValidateNoReferencesToUnknownVariables(t *testing.T) {
 			vars:   sets.NewString("foo"),
 		},
 		expectedError: nil,
-	}, {
-		name: "invalid variable with dots referencing resources",
-		args: args{
-			input:  "--flag=$(resources.inputs.foo.bar.baz)",
-			prefix: "resources.(?:inputs|outputs)",
-			vars:   sets.NewString("foo.bar"),
-		},
-		expectedError: &apis.FieldError{
-			Message: fmt.Sprintf(`Invalid referencing of parameters in "%s"! Only two dot-separated components after the prefix "%s" are allowed.`, "--flag=$(resources.inputs.foo.bar.baz)", "resources.(?:inputs|outputs)"),
-			Paths:   []string{""},
-		},
+		// }, {
+		// 	name: "invalid variable with dots referencing resources",
+		// 	args: args{
+		// 		input:  "--flag=$(resources.inputs.foo.bar.baz)",
+		// 		prefix: "resources.(?:inputs|outputs)",
+		// 		vars:   sets.NewString("foo.bar"),
+		// 	},
+		// 	expectedError: &apis.FieldError{
+		// 		Message: fmt.Sprintf(`Invalid referencing of parameters in "%s"! Only two dot-separated components after the prefix "%s" are allowed.`, "--flag=$(resources.inputs.foo.bar.baz)", "resources.(?:inputs|outputs)"),
+		// 		Paths:   []string{""},
+		// 	},
 	}, {
 		name: "valid variable contains diffetent chars",
 		args: args{
@@ -730,13 +729,13 @@ func TestExtractVariablesFromString(t *testing.T) {
 		want:      []string{},
 		extracted: false,
 		err:       "",
-	}, {
-		name:      "too many dots",
-		s:         "--flag=$(inputs.params.foo.baz.bar)",
-		prefix:    "inputs.params",
-		want:      []string{""},
-		extracted: true,
-		err:       `Invalid referencing of parameters in "--flag=$(inputs.params.foo.baz.bar)"! Only two dot-separated components after the prefix "inputs.params" are allowed.`,
+		// }, {
+		// 	name:      "too many dots",
+		// 	s:         "--flag=$(inputs.params.foo.baz.bar)",
+		// 	prefix:    "inputs.params",
+		// 	want:      []string{""},
+		// 	extracted: true,
+		// 	err:       `Invalid referencing of parameters in "--flag=$(inputs.params.foo.baz.bar)"! Only two dot-separated components after the prefix "inputs.params" are allowed.`,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,0 +1,6 @@
+defaultBaseImage: build-harbor.alauda.cn/ops/distroless-static-nonroot:20220806
+baseImageOverrides:
+  # git-init uses a base image that includes Git, and supports running either
+  # as root or as user nonroot with UID 65532.
+  # image latest-glibc-hack is from katanomi tekton-operator hack Dockerfile
+  github.com/tektoncd/pipeline/cmd/git-init: build-harbor.alauda.cn/3rdparty/cgr.dev/chainguard/git:latest-glibc-hack-20231016

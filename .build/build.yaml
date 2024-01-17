@@ -1,0 +1,453 @@
+kind: Build
+apiVersion: builds.katanomi.dev/v1alpha1
+spec:
+  workspaces:
+  - name: source
+  - name: source-tkn
+  - name: source-git-init
+  - name: cache
+  tasks:
+    ## read oss version
+    - name: oss-version
+      taskRef:
+        kind: ClusterTask
+        name: alauda-read-oss-version
+      params:
+      - name: version-file-path
+        value: ".build/opensource-version"
+      workspaces:
+      - name: source
+        workspace: source
+    - name: golang-test
+      taskRef:
+        kind: ClusterTask
+        name: go-unit-test
+      runAfter:
+        - oss-version
+      params:
+        - name: command
+          value: |
+            export GOPROXY=https://build-nexus.alauda.cn/repository/golang/,https://goproxy.cn,direct
+            export CGO_ENABLED=0
+            export GONOSUMDB=*
+            export GOMAXPROCS=8
+            go mod download
+
+            go test -v -json -coverprofile cover.out ./... | tee test.json
+
+        - name: quality-gate-rules
+          value:
+            - lines-coverage=10
+            - passed-tests-rate=100
+        - name: tool-image
+          # value: registry.alauda.cn:60080/devops/builder-go:1.18-ubuntu-495a3d88
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+        - name: test-report-path
+          value: ./test.json
+        - name: coverage-report-path
+          value: ./cover.out
+      workspaces:
+        - name: source
+          workspace: source
+        - name: cache
+          workspace: cache
+    ## ko publish image
+    - name: build-entrypoint
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/entrypoint"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/entrypoint"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    ## ko publish image
+    - name: build-pipeline-controller
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/controller"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/controller"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    ## ko publish image
+    - name: build-pipeline-webhook
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/webhook"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/webhook"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    ## ko publish image
+    - name: build-pipeline-nop
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/nop"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/nop"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    ## ko publish image
+    - name: build-pipeline-workingdirinit
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/workingdirinit"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/workingdirinit"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    ## ko publish image
+    - name: build-pipeline-resolvers
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/resolvers"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/resolvers"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    # ko publish image
+    - name: build-pipeline-events
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/events"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/events"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+    # ko publish image
+    - name: build-pipeline-sidecarlogresults
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source
+      runAfter:
+        - oss-version
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/pipeline/cmd/sidecarlogresults"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/sidecarlogresults"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+
+    # clone tkn
+    - name: clone-tkn
+      timeout: 30m
+      retries: 0
+      taskRef:
+        kind: ClusterTask
+        name: alauda-git-clone
+      workspaces:
+        - name: source
+          workspace: source-tkn
+      params:
+        - name: url
+          value: "https://github.com/tektoncd/cli.git"
+        - name: revision
+          # use the latest release tag
+          # https://github.com/tektoncd/cli/releases
+          value: "refs/tags/v0.34.0"
+    # modify the .ko.yaml
+    - name: modify-tkn-koyaml
+      timeout: 30m
+      retries: 0
+      taskRef:
+        kind: ClusterTask
+        name: run-script
+      workspaces:
+        - name: source
+          workspace: source-tkn
+      runAfter:
+        - clone-git-init
+      params:
+        - name: command
+          value: |
+            cat <<EOF > .ko.yaml
+            defaultBaseImage: build-harbor.alauda.cn/ops/distroless-static-nonroot:20220806
+            EOF
+    ## ko publish image
+    - name: build-tkn
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          workspace: source-tkn
+        - name: cache
+          workspace: cache
+      runAfter:
+        - oss-version
+        - modify-tkn-koyaml
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd/cli/cmd/tkn"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/cli/cmd/tkn"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+
+    # clone git-init
+    - name: clone-git-init
+      timeout: 30m
+      retries: 0
+      taskRef:
+        kind: ClusterTask
+        name: alauda-git-clone
+      workspaces:
+        - name: source
+          workspace: source-git-init
+      params:
+        - name: url
+          value: "https://github.com/tektoncd-catalog/git-clone.git"
+        - name: revision
+          # this component is not released yet, so use the latest commit
+          # value: "refs/heads/main"
+          value: "b33cc3e770a41900b59c197412c0c8ab9fa5a026"
+    # modify the .ko.yaml
+    - name: modify-git-init-koyaml
+      timeout: 30m
+      retries: 0
+      taskRef:
+        kind: ClusterTask
+        name: run-script
+      workspaces:
+        - name: source
+          workspace: source-git-init
+      runAfter:
+        - clone-git-init
+      params:
+        - name: tool-image
+          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+        - name: command
+          value: |
+            # copy files to kodata, avoid next step build error
+            rm -rf image/git-init/kodata/LICENSE image/git-init/kodata/third_party
+            cp -rf LICENSE image/git-init/kodata/
+
+            export GOPROXY=https://build-nexus.alauda.cn/repository/golang/,https://goproxy.cn,direct
+            export CGO_ENABLED=0
+            export GONOSUMDB=*
+
+            # modify th go.mod to fix vuln
+            cd image/git-init/
+            go get golang.org/x/net@v0.17.0
+            go get google.golang.org/grpc@v1.56.3
+            go mod tidy
+            go mod vendor
+
+            cat <<EOF > .ko.yaml
+            defaultBaseImage: build-harbor.alauda.cn/ops/distroless-static-nonroot:20220806
+            baseImageOverrides:
+              # git-init uses a base image that includes Git, and supports running either
+              # as root or as user nonroot with UID 65532.
+              # image latest-glibc-hack is from katanomi tekton-operator hack Dockerfile
+              github.com/tektoncd-catalog/git-clone/image/git-init: build-harbor.alauda.cn/3rdparty/cgr.dev/chainguard/git:latest-glibc-hack-20231016
+            EOF
+    ## ko publish image
+    - name: build-git-init
+      taskRef:
+        kind: ClusterTask
+        name: alauda-ko-build
+      workspaces:
+        - name: source
+          subPath: image/git-init
+          workspace: source-git-init
+        - name: cache
+          workspace: cache
+      runAfter:
+        - oss-version
+        - modify-git-init-koyaml
+      params:
+        - name: verbose
+          value: "false"
+        - name: import-path
+          value: "github.com/tektoncd-catalog/git-clone/git-init"
+        - name: container-image
+          value: "build-harbor.alauda.cn/devops/tektoncd/pipeline/cmd/git-init"
+        - name: container-image-tag
+          value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
+
+    #################
+    # code-scan
+    #################
+    - name: code-scan
+      timeout: 30m
+      retries: 0
+      runAfter:
+        - golang-test
+      taskRef:
+        kind: ClusterTask
+        name: sonarqube-analysis
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: server
+          value: https://build-sonar.alauda.cn
+
+  #################
+  # runTemplate
+  #################
+  runTemplate:
+    spec:
+      workspaces:
+      - name: cache
+        persistentVolumeClaim:
+          claimName: build-cache
+      - name: source-git-init
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1000Mi
+      - name: source-tkn
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1000Mi
+      taskRunSpecs:
+        - pipelineTaskName: golang-test
+          stepOverrides:
+            - name: prepare
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 100Mi
+                requests:
+                  cpu: 50m
+                  memory: 50Mi
+            - name: test
+              resources:
+                requests:
+                  cpu: "6"
+                  memory: 4Gi
+                limits:
+                  cpu: "8"
+                  memory: 6Gi
+            - name: analysis
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 100Mi
+                requests:
+                  cpu: 50m
+                  memory: 50Mi
+        - pipelineTaskName: build-git-init
+          stepOverrides:
+            - name: build
+              resources:
+                requests:
+                  cpu: "4"
+                  memory: "4Gi"
+                limits:
+                  cpu: "6"
+                  memory: "6Gi"
+        - pipelineTaskName: modify-git-init-koyaml
+          stepOverrides:
+            - name: run
+              resources:
+                requests:
+                  cpu: "500m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "1"
+                  memory: "1Gi"

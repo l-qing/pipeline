@@ -23,7 +23,9 @@ import (
 	"github.com/tektoncd/pipeline/pkg/remote"
 	resolutioncommon "github.com/tektoncd/pipeline/pkg/resolution/common"
 	remoteresource "github.com/tektoncd/pipeline/pkg/resolution/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"knative.dev/pkg/kmap"
 	"knative.dev/pkg/kmeta"
 )
 
@@ -79,6 +81,15 @@ func (resolver *Resolver) Get(ctx context.Context, _, _ string) (runtime.Object,
 	obj, _, err := scheme.Codecs.UniversalDeserializer().Decode(data, nil, nil)
 	if err != nil {
 		return nil, nil, &InvalidRuntimeObjectError{original: err}
+	}
+
+	// Copy annotations from the resolved resource to the runtime object.
+	if new, ok := obj.(metav1.Object); ok {
+		new.SetAnnotations(kmap.Union(resolved.Annotations(), new.GetAnnotations()))
+		if len(new.GetAnnotations()) == 0 {
+			new.SetAnnotations(nil)
+		}
+		obj = new.(runtime.Object)
 	}
 	return obj, resolved.RefSource(), nil
 }

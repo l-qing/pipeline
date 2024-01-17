@@ -104,7 +104,6 @@ type TaskSpec struct {
 	// must be supplied as inputs in TaskRuns unless they declare a default
 	// value.
 	// +optional
-	// +listType=atomic
 	Params ParamSpecs `json:"params,omitempty"`
 
 	// DisplayName is a user-facing name of the task that may be

@@ -57,10 +57,6 @@ func (dc *basicGitConfig) Set(value string) error {
 	secret := parts[0]
 	url := parts[1]
 
-	if _, ok := dc.entries[url]; ok {
-		return fmt.Errorf("multiple entries for url: %v", url)
-	}
-
 	e, err := newBasicEntry(url, secret)
 	if err != nil {
 		return err

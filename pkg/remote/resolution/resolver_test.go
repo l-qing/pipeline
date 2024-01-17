@@ -34,6 +34,8 @@ kind: Pipeline
 apiVersion: tekton.dev/v1beta1
 metadata:
   name: foo
+  annotations:
+    foo: bar
 spec:
   tasks:
   - name: task1
@@ -69,8 +71,13 @@ func TestGet_Successful(t *testing.T) {
 			ResolvedResource: resolved,
 		}
 		resolver := NewResolver(requester, owner, "git", "", "", nil)
-		if _, _, err := resolver.Get(ctx, "foo", "bar"); err != nil {
+		if obj, _, err := resolver.Get(ctx, "foo", "bar"); err != nil {
 			t.Fatalf("unexpected error: %v", err)
+		} else {
+			annotations := obj.(metav1.Object).GetAnnotations()
+			if annotations["foo"] != "bar" {
+				t.Fatalf("expected annotations to be set")
+			}
 		}
 	}
 }
