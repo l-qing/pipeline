@@ -76,10 +76,6 @@ func (dc *basicDocker) Set(value string) error {
 	secret := parts[0]
 	url := parts[1]
 
-	if _, ok := dc.Entries[url]; ok {
-		return fmt.Errorf("multiple entries for url: %v", url)
-	}
-
 	e, err := newEntry(secret)
 	if err != nil {
 		return err

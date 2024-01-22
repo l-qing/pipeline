@@ -39,7 +39,6 @@ type TaskRunSpec struct {
 	// +optional
 	Debug *TaskRunDebug `json:"debug,omitempty"`
 	// +optional
-	// +listType=atomic
 	Params Params `json:"params,omitempty"`
 	// Deprecated: Unused, preserved only for backwards compatibility
 	// +optional

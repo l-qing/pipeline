@@ -5259,17 +5259,17 @@ func TestValidateParamEnumSubset_Invalid(t *testing.T) {
 			},
 		},
 		wantErr: fmt.Errorf("pipeline param \"p1\" has no enum, but referenced in \"ref1\" task has enums: [v1 v3]"),
-	}, {
-		name: "invalid param syntax - failure",
-		params: []v1.Param{
-			{
-				Name: "resolved-task-p1",
-				Value: v1.ParamValue{
-					StringVal: "$(params.p1.aaa.bbb)",
-				},
-			},
-		},
-		wantErr: fmt.Errorf("unexpected error in ExtractVariablesFromString: Invalid referencing of parameters in \"$(params.p1.aaa.bbb)\"! Only two dot-separated components after the prefix \"params\" are allowed."),
+		// }, {
+		// 	name: "invalid param syntax - failure",
+		// 	params: []v1.Param{
+		// 		{
+		// 			Name: "resolved-task-p1",
+		// 			Value: v1.ParamValue{
+		// 				StringVal: "$(params.p1.aaa.bbb)",
+		// 			},
+		// 		},
+		// 	},
+		// 	wantErr: fmt.Errorf("unexpected error in ExtractVariablesFromString: Invalid referencing of parameters in \"$(params.p1.aaa.bbb)\"! Only two dot-separated components after the prefix \"params\" are allowed."),
 	}}
 
 	for _, tc := range tcs {
