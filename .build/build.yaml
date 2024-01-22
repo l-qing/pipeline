@@ -41,7 +41,7 @@ spec:
             - passed-tests-rate=100
         - name: tool-image
           # value: registry.alauda.cn:60080/devops/builder-go:1.18-ubuntu-495a3d88
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
         - name: test-report-path
           value: ./test.json
         - name: coverage-report-path
@@ -59,11 +59,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/entrypoint"
         - name: container-image
@@ -71,7 +75,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     ## ko publish image
     - name: build-pipeline-controller
       taskRef:
@@ -80,11 +84,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/controller"
         - name: container-image
@@ -92,7 +100,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     ## ko publish image
     - name: build-pipeline-webhook
       taskRef:
@@ -101,11 +109,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/webhook"
         - name: container-image
@@ -113,7 +125,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     ## ko publish image
     - name: build-pipeline-nop
       taskRef:
@@ -122,11 +134,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/nop"
         - name: container-image
@@ -134,7 +150,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     ## ko publish image
     - name: build-pipeline-workingdirinit
       taskRef:
@@ -143,11 +159,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/workingdirinit"
         - name: container-image
@@ -155,7 +175,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     ## ko publish image
     - name: build-pipeline-resolvers
       taskRef:
@@ -164,11 +184,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/resolvers"
         - name: container-image
@@ -176,7 +200,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     # ko publish image
     - name: build-pipeline-events
       taskRef:
@@ -185,11 +209,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/events"
         - name: container-image
@@ -197,7 +225,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
     # ko publish image
     - name: build-pipeline-sidecarlogresults
       taskRef:
@@ -206,11 +234,15 @@ spec:
       workspaces:
         - name: source
           workspace: source
+        - name: cache
+          workspace: cache
       runAfter:
         - oss-version
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/pipeline/cmd/sidecarlogresults"
         - name: container-image
@@ -218,7 +250,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
 
     # clone tkn
     - name: clone-tkn
@@ -271,6 +303,8 @@ spec:
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd/cli/cmd/tkn"
         - name: container-image
@@ -278,7 +312,7 @@ spec:
         - name: container-image-tag
           value: v$(tasks.oss-version.results.oss-version)-$(tasks.oss-version.results.commit-short-id)
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
 
     # clone git-init
     - name: clone-git-init
@@ -311,7 +345,7 @@ spec:
         - clone-git-init
       params:
         - name: tool-image
-          value: build-harbor.alauda.cn/devops/builder-go:1.20-bullseye-48c4b76a
+          value: build-harbor.alauda.cn/devops/builder-go:1.21-bullseye-9dcd2518
         - name: command
           value: |
             # copy files to kodata, avoid next step build error
@@ -354,6 +388,8 @@ spec:
       params:
         - name: verbose
           value: "false"
+        - name: ko-version
+          value: "0.15.1"
         - name: import-path
           value: "github.com/tektoncd-catalog/git-clone/git-init"
         - name: container-image
