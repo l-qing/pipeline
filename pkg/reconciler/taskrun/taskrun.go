@@ -305,12 +305,15 @@ func (c *Reconciler) finishReconcileUpdateEmitEvents(ctx context.Context, tr *v1
 	// Send k8s events and cloud events (when configured)
 	events.Emit(ctx, beforeCondition, afterCondition, tr)
 
-	_, err := c.updateLabelsAndAnnotations(ctx, tr)
-	if err != nil {
-		logger.Warn("Failed to update TaskRun labels/annotations", zap.Error(err))
-		events.EmitError(controller.GetEventRecorder(ctx), err, tr)
+	var err error
+	// If the TaskRun is done, no need to update the TaskRun's labels and annotations
+	if !tr.IsDone() || beforeCondition.IsUnknown() {
+		_, err = c.updateLabelsAndAnnotations(ctx, tr)
+		if err != nil {
+			logger.Warn("Failed to update TaskRun labels/annotations", zap.Error(err))
+			events.EmitError(controller.GetEventRecorder(ctx), err, tr)
+		}
 	}
-
 	merr := multierror.Append(previousError, err).ErrorOrNil()
 	if controller.IsPermanentError(previousError) {
 		return controller.NewPermanentError(merr)
