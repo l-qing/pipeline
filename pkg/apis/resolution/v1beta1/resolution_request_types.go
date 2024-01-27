@@ -83,9 +83,16 @@ type ResolutionRequestStatusFields struct {
 	// Deprecated: Use RefSource instead
 	Source *pipelinev1.RefSource `json:"source"`
 
+	// Compatibility Adaptation:
+	// Updates the configuration to be compatible with Tekton Pipeline v0.41.
+	// Adds an optional annotation to maintain backward compatibility with older versions.
+	// This prevents the JSON deserialization error due to the unrecognized field "refSource"
+	// in the old version of the Tekton Pipeline.
+
 	// RefSource is the source reference of the remote data that records the url, digest
 	// and the entrypoint.
-	RefSource *pipelinev1.RefSource `json:"refSource"`
+	// +optional
+	RefSource *pipelinev1.RefSource `json:"refSource,omitempty"`
 }
 
 // GetStatus implements KRShaped.
