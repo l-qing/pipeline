@@ -1,0 +1,29 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: tekton-pipeline
+  description:  Tekton Pipeline 是一个 Kubernetes 原生的持续集成和持续交付 (CI/CD) 系统，它使用自定义资源来声明 CI/CD 工作流。Tekton Pipeline 旨在提供一个灵活的、可扩展的系统，用于在 Kubernetes 上运行 CI/CD 工作流，以便用户可以构建、测试和部署他们的代码。
+  title: Tekton Pipeline
+  annotations:
+    # gitlab plugin
+    github.com/project-slug: katanomi/pipeline
+    # acp cicd plugin
+    acp.cpaas.io/ci-pipeline: devops/business-build/katanomi/pipeline
+    acp.cpaas.io/instance: edge.alauda.cn
+    # harbor plugin
+    goharbor.io/repository-slug: devops/tektoncd/pipeline/cmd/workingdirinit,devops/tektoncd/pipeline/cmd/nop,devops/tektoncd/pipeline/cmd/entrypoint,devops/tektoncd/pipeline/cmd/sidecarlogresults,devops/tektoncd/pipeline/cmd/webhook,devops/tektoncd/pipeline/cmd/events,devops/tektoncd/pipeline/cmd/resolvers,devops/tektoncd/pipeline/cmd/controller,devops/tektoncd/pipeline/cmd/git-init,devops/tektoncd/cli/cmd/tkn
+    #
+    acp.cpaas.io/open-source-component-repo: https://github.com/tektoncd/pipeline
+    acp.cpaas.io/open-source-component-version: v0.56.0
+    acp.cpaas.io/open-source-component-license: Apache
+    acp.cpaas.io/open-source-component-license_url: https://github.com/tektoncd/pipeline/blob/v0.56.0/LICENSE
+    acp.cpaas.io/owner: qingliu@alauda.io
+    # sonarqube plugin
+    sonarqube.org/project-key: "github.com-tektoncd-pipeline"
+    # backstage techdocs plugin
+    backstage.io/techdocs-ref: dir:.
+
+spec:
+  type: service
+  lifecycle: production
+  owner: devops
