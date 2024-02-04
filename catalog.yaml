@@ -11,7 +11,7 @@ metadata:
     acp.cpaas.io/ci-pipeline: devops/business-build/katanomi/pipeline
     acp.cpaas.io/instance: edge.alauda.cn
     # harbor plugin
-    goharbor.io/repository-slug: devops/tektoncd/pipeline/cmd/workingdirinit,devops/tektoncd/pipeline/cmd/nop,devops/tektoncd/pipeline/cmd/entrypoint,devops/tektoncd/pipeline/cmd/sidecarlogresults,devops/tektoncd/pipeline/cmd/webhook,devops/tektoncd/pipeline/cmd/events,devops/tektoncd/pipeline/cmd/resolvers,devops/tektoncd/pipeline/cmd/controller,devops/tektoncd/pipeline/cmd/git-init,devops/tektoncd/cli/cmd/tkn,devops/tektoncd/pipeline/cmd/kubeconfigwriter,devops/tektoncd/pipeline/cmd/imagedigestexporter,devops/tektoncd/pipeline/cmd/pullrequest-init
+    goharbor.io/repository-slug: devops/tektoncd/pipeline/cmd/workingdirinit,devops/tektoncd/pipeline/cmd/nop,devops/tektoncd/pipeline/cmd/entrypoint,devops/tektoncd/pipeline/cmd/sidecarlogresults,devops/tektoncd/pipeline/cmd/webhook,devops/tektoncd/pipeline/cmd/events,devops/tektoncd/pipeline/cmd/resolvers,devops/tektoncd/pipeline/cmd/controller,devops/tektoncd/pipeline/cmd/git-init,devops/tektoncd/cli/cmd/tkn,devops/tektoncd/pipeline/cmd/kubeconfigwriter,devops/tektoncd/pipeline/cmd/imagedigestexporter,devops/tektoncd/pipeline/cmd/pullrequest-init,3rdparty/gcr.io/google.com/cloudsdktool/cloud-sdk
     #
     acp.cpaas.io/open-source-component-repo: https://github.com/tektoncd/pipeline
     acp.cpaas.io/open-source-component-version: v0.56.0
