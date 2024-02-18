@@ -211,7 +211,12 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, tr *v1.TaskRun) pkgrecon
 		// Compute the time since the task started.
 		elapsed := c.Clock.Since(tr.Status.StartTime.Time)
 		// Snooze this resource until the timeout has elapsed.
-		return controller.NewRequeueAfter(tr.GetTimeout(ctx) - elapsed)
+		timeout := tr.GetTimeout(ctx)
+		waitTime := timeout - elapsed
+		if timeout == config.NoTimeoutDuration {
+			waitTime = time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes) * time.Minute
+		}
+		return controller.NewRequeueAfter(waitTime)
 	}
 	return nil
 }
@@ -909,7 +914,7 @@ func isPodAdmissionFailed(err error) bool {
 func updateStoppedSidecarStatus(pod *corev1.Pod, tr *v1.TaskRun) error {
 	tr.Status.Sidecars = []v1.SidecarState{}
 	for _, s := range pod.Status.ContainerStatuses {
-		if !podconvert.IsContainerStep(s.Name) {
+		if podconvert.IsContainerSidecar(s.Name) {
 			var sidecarState corev1.ContainerState
 			if s.LastTerminationState.Terminated != nil {
 				// Sidecar has successfully by terminated by nop image

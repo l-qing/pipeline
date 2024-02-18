@@ -2777,6 +2777,91 @@ status:
 	}
 }
 
+func TestReconcileWithTimeoutDisabled(t *testing.T) {
+	type testCase struct {
+		name    string
+		taskRun *v1.TaskRun
+	}
+
+	testcases := []testCase{
+		{
+			name: "taskrun with timeout",
+			taskRun: parse.MustParseV1TaskRun(t, `
+metadata:
+  name: test-taskrun-timeout
+  namespace: foo
+spec:
+  taskRef:
+    name: test-task
+  timeout: 10m
+status:
+  conditions:
+  - status: Unknown
+    type: Succeeded
+`),
+		}, {
+			name: "taskrun with default timeout",
+			taskRun: parse.MustParseV1TaskRun(t, `
+metadata:
+  name: test-taskrun-default-timeout-60-minutes
+  namespace: foo
+spec:
+  taskRef:
+    name: test-task
+status:
+  conditions:
+  - status: Unknown
+    type: Succeeded
+`),
+		}, {
+			name: "task run with timeout set to 0 to disable",
+			taskRun: parse.MustParseV1TaskRun(t, `
+metadata:
+  name: test-taskrun-timeout-disabled
+  namespace: foo
+spec:
+  taskRef:
+    name: test-task
+  timeout: 0s
+status:
+  conditions:
+  - status: Unknown
+    type: Succeeded
+`),
+		}}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			start := metav1.NewTime(time.Now())
+			tc.taskRun.Status.StartTime = &start
+			pod, err := makePod(tc.taskRun, simpleTask)
+			d := test.Data{
+				TaskRuns: []*v1.TaskRun{tc.taskRun},
+				Tasks:    []*v1.Task{simpleTask},
+				Pods:     []*corev1.Pod{pod},
+			}
+			testAssets, cancel := getTaskRunController(t, d)
+			defer cancel()
+			c := testAssets.Controller
+			clients := testAssets.Clients
+
+			err = c.Reconciler.Reconcile(testAssets.Ctx, getRunName(tc.taskRun))
+			if err == nil {
+				t.Errorf("expected error when reconciling completed TaskRun : %v", err)
+			}
+			if isRequeueError, requeueDuration := controller.IsRequeueKey(err); !isRequeueError {
+				t.Errorf("Expected requeue error, but got: %s", err.Error())
+			} else if requeueDuration < 0 {
+				t.Errorf("Expected a positive requeue duration but got %s", requeueDuration.String())
+			}
+			_, err = clients.Pipeline.TektonV1().TaskRuns(tc.taskRun.Namespace).Get(testAssets.Ctx, tc.taskRun.Name, metav1.GetOptions{})
+			if err != nil {
+				t.Errorf("Expected completed TaskRun %s to exist but instead got error when getting it: %v", tc.taskRun.Name, err)
+			}
+		})
+	}
+}
+
 func TestReconcileTimeouts(t *testing.T) {
 	type testCase struct {
 		name           string
@@ -5282,13 +5367,24 @@ status:
 }
 
 func TestStopSidecars_WithInjectedSidecarsNoTaskSpecSidecars(t *testing.T) {
+	sidecarTask := &v1.Task{
+		ObjectMeta: objectMeta("test-task-injected-sidecar", "foo"),
+		Spec: v1.TaskSpec{
+			Steps: []v1.Step{simpleStep},
+			Sidecars: []v1.Sidecar{{
+				Name:  "sidecar1",
+				Image: "image-id",
+			}},
+		},
+	}
+
 	taskRun := parse.MustParseV1TaskRun(t, `
 metadata:
   name: test-taskrun-injected-sidecars
   namespace: foo
 spec:
   taskRef:
-    name: test-task
+    name: test-task-injected-sidecar
 status:
   podName: test-taskrun-injected-sidecars-pod
   conditions:
@@ -5296,6 +5392,11 @@ status:
     reason: Build succeeded
     status: "True"
     type: Succeeded
+  sidecars:
+  - name: sidecar1
+    container: sidecar-sidecar1
+    running:
+      startedAt: "2000-01-01T01:01:01Z"
 `)
 
 	pod := &corev1.Pod{
@@ -5308,6 +5409,10 @@ status:
 				{
 					Name:  "step-do-something",
 					Image: "my-step-image",
+				},
+				{
+					Name:  "sidecar1",
+					Image: "image-id",
 				},
 				{
 					Name:  "injected-sidecar",
@@ -5323,6 +5428,10 @@ status:
 					State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{}},
 				},
 				{
+					Name:  "sidecar-sidecar1",
+					State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{}},
+				},
+				{
 					Name:  "injected-sidecar",
 					State: corev1.ContainerState{Running: &corev1.ContainerStateRunning{}},
 				},
@@ -5333,7 +5442,7 @@ status:
 	d := test.Data{
 		Pods:     []*corev1.Pod{pod},
 		TaskRuns: []*v1.TaskRun{taskRun},
-		Tasks:    []*v1.Task{simpleTask},
+		Tasks:    []*v1.Task{sidecarTask},
 	}
 
 	testAssets, cancel := getTaskRunController(t, d)
@@ -5353,13 +5462,26 @@ status:
 		t.Fatalf("error retrieving pod: %s", err)
 	}
 
-	if len(retrievedPod.Spec.Containers) != 2 {
+	if len(retrievedPod.Spec.Containers) != 3 {
 		t.Fatalf("expected pod with two containers")
 	}
 
 	// check that injected sidecar is replaced with nop image
-	if d := cmp.Diff(images.NopImage, retrievedPod.Spec.Containers[1].Image); d != "" {
+	if d := cmp.Diff(images.NopImage, retrievedPod.Spec.Containers[2].Image); d != "" {
 		t.Errorf("expected injected sidecar image to be replaced with nop image %s", diff.PrintWantGot(d))
+	}
+
+	// Get the updated TaskRun.
+	reconciledRun, err := clients.Pipeline.TektonV1().TaskRuns(taskRun.Namespace).Get(testAssets.Ctx, taskRun.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("Error getting updated TaskRun after reconcile: %v", err)
+	}
+
+	// Verify that the injected sidecar isn't present in the TaskRun's status.
+	for _, sc := range reconciledRun.Status.Sidecars {
+		if sc.Container == "injected-sidecar" {
+			t.Errorf("expected not to find injected-sidecar in TaskRun status, but found %v", sc)
+		}
 	}
 }
 

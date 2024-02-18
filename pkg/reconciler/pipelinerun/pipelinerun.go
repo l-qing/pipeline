@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/tektoncd/pipeline/pkg/apis/config"
@@ -273,9 +274,20 @@ func (c *Reconciler) ReconcileKind(ctx context.Context, pr *v1.PipelineRun) pkgr
 		// Compute the time since the task started.
 		elapsed := c.Clock.Since(pr.Status.StartTime.Time)
 		// Snooze this resource until the appropriate timeout has elapsed.
-		waitTime := pr.PipelineTimeout(ctx) - elapsed
-		if pr.Status.FinallyStartTime == nil && pr.TasksTimeout() != nil {
+		// but if the timeout has been disabled by setting timeout to 0, we
+		// do not want to subtract from 0, because a negative wait time will
+		// result in the requeue happening essentially immediately
+		timeout := pr.PipelineTimeout(ctx)
+		taskTimeout := pr.TasksTimeout()
+		waitTime := timeout - elapsed
+		if timeout == config.NoTimeoutDuration {
+			waitTime = time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes) * time.Minute
+		}
+		if pr.Status.FinallyStartTime == nil && taskTimeout != nil {
 			waitTime = pr.TasksTimeout().Duration - elapsed
+			if taskTimeout.Duration == config.NoTimeoutDuration {
+				waitTime = time.Duration(config.FromContextOrDefaults(ctx).Defaults.DefaultTimeoutMinutes) * time.Minute
+			}
 		} else if pr.Status.FinallyStartTime != nil && pr.FinallyTimeout() != nil {
 			finallyWaitTime := pr.FinallyTimeout().Duration - c.Clock.Since(pr.Status.FinallyStartTime.Time)
 			if finallyWaitTime < waitTime {
@@ -848,6 +860,14 @@ func (c *Reconciler) runNextSchedulableTask(ctx context.Context, pr *v1.Pipeline
 				continue
 			}
 			resources.ApplyTaskResults(resources.PipelineRunState{rpt}, resolvedResultRefs)
+
+			if err := rpt.EvaluateCEL(); err != nil {
+				logger.Errorf("Final task %q is not executed, due to error evaluating CEL %s: %v", rpt.PipelineTask.Name, pr.Name, err)
+				pr.Status.MarkFailed(string(v1.PipelineRunReasonCELEvaluationFailed),
+					"Error evaluating CEL %s: %w", pr.Name, pipelineErrors.WrapUserError(err))
+				return controller.NewPermanentError(err)
+			}
+
 			nextRpts = append(nextRpts, rpt)
 		}
 	}
